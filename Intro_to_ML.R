@@ -246,4 +246,4 @@ results <- replicate(100, expr = {
 # fix the day to be the centre of the week as x0 then for any other day x such that |x-x0| <= 3.5, we assume f(x) is a constant f(x) = μ
 
 
-
+# test
