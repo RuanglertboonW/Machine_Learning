@@ -245,5 +245,59 @@ results <- replicate(100, expr = {
 # with this assumption in place, we have several data points with the same expected value
 # fix the day to be the centre of the week as x0 then for any other day x such that |x-x0| <= 3.5, we assume f(x) is a constant f(x) = μ
 
+# in smoothing, we cell the size of the interval |x-x0| satisfying the particular condition the window size, bandwidth or span
 
-# test
+# bin smoother
+span = 7
+fit = with(polls_2008, ksmooth(day, margin, x.points = day, kernel = 'box', bandwidth = span))
+polls_2008 %>% mutate(smooth = fit$y) %>%
+  ggplot(aes(day, margin)) +
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth), color="blue")
+
+# the result from the smooth plot is wiggley. we can attenuate by taking weighted averages that give the centre point more weight than the far away points, with the two points at the edge receiving very little weight
+# change the kernel = 'box' to kernel = 'normal'
+
+# bin smoother
+span = 7
+fit = with(polls_2008, ksmooth(day, margin, x.points = day, kernel = 'box', bandwidth = span))
+polls_2008 %>% mutate(smooth = fit$y) %>%
+  ggplot(aes(day, margin)) +
+  geom_point(size = 1.5, alpha = .5, color = "blue") + 
+  geom_line(aes(day, smooth), color="red")
+
+######### local weight regression ##########
+# bin smoother need small windows for the approximately constant assumptions to hold.
+# as a result, we end up with a small number of data points to average and obtain imprecise estimates f(x) 
+# the loess permits us to consider larger window sizes
+
+
+# the update smooth fit are based on the larger sample size to estimate the local parameters
+total_days <- diff(range(polls_2008$day))
+span <- 21/total_days
+
+fit <- loess(margin ~ day, degree=1, span = span, data=polls_2008) ## degree = 1 means polynomial degree one aka linear
+
+polls_2008 %>% mutate(smooth = fit$fitted) %>%
+  ggplot(aes(day, margin)) +
+  geom_point(size = 1.5, alpha = .5, color = "blue") +
+  geom_line(aes(day, smooth), color="red")
+
+## in loess, span argument will specify the number of points used in the local fit the same
+# For example, if N is the number of data points and span=0.5, then for a given x, loess will use the 0.5 * N closest points to x for the fit.
+
+# When fitting a line locally, loess uses a weighted approach. Basically, instead of using least squares, we minimize a weighted version:
+
+# loess has the option of fitting the local model robustly. An iterative algorithm is implemented in which, after fitting a model in one iteration, outliers are detected and down-weighted for the next iteration. To use this option, we use the argument family="symmetric".
+
+
+
+
+
+
+
+
+
+
+
+
